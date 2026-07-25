@@ -28,7 +28,7 @@ An AI-powered career platform that helps users:
 - Structured Output
 - Supabase Storage
 
-### Sprint 2 🚧
+### Sprint 2 ✅
 - Job Description Parser
 
 ### Sprint 3
