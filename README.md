@@ -30,6 +30,11 @@ An AI-powered career platform that helps users:
 
 ### Sprint 2 ✅
 - Job Description Parser
+- Form Submission
+- Claude Parsing
+- Structured Output
+- Edit Fields
+- Supabase Storage
 
 ### Sprint 3
 - AI Matching Engine
