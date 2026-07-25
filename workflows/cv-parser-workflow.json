@@ -1,0 +1,321 @@
+{
+  "name": "AI-Career-Platform",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "186da76d-ca17-4869-9b6f-6f670c06f8f3",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "formTitle": "AI CV Analyzer",
+        "formDescription": "Upload your CV in PDF format for AI analysis.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload CV",
+              "fieldType": "file",
+              "fieldName": "cv",
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4c27254d-ca24-4cc9-9df9-5fb494eacb65",
+      "name": "On form submission",
+      "webhookId": "c3f0ef69-0b99-4f4a-adc4-9da7b670bbb1"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "cv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "fff5af02-d24c-46c1-b4a2-a4963d1293f0",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-6",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        224
+      ],
+      "id": "9b62620a-850d-4d83-812b-50f4b6c5af82",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "UKw98FyFfaGrD8Ut",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert HR recruiter.\n\nAnalyze the following CV and identify:\n\n- Candidate full name\n- Email\n- Phone number\n- LinkedIn profile\n- Current job title\n- Years of experience\n- Skills\n- Languages\n- Education\n- Certifications\n- Work experience\n- Key strengths\n\nIf any information is missing, return \"Not provided\".\n\nCV:\n\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "cafa1c97-d9bc-4984-b0e9-f0b4c141cb5d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"\",\n  \"email\": \"\",\n  \"phone\": \"\",\n  \"linkedin\": \"\",\n  \"location\": \"\",\n  \"current_title\": \"\",\n  \"summary\": \"\",\n  \"years_experience\": 0,\n  \"skills\": [\"\"],\n  \"soft_skills\": [\"\"],\n  \"languages\": [\"\"],\n  \"certifications\": [\"\"],\n  \"education\": [\n    {\n      \"institution\": \"\",\n      \"degree\": \"\"\n    }\n  ],\n  \"experience\": [\n    {\n      \"company\": \"\",\n      \"title\": \"\",\n      \"start_date\": \"\",\n      \"end_date\": \"\",\n      \"description\": \"\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        208
+      ],
+      "id": "d6f670e4-b207-477d-a747-b4d37a48cd3d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "tableId": "candidates",
+        "dataToSend": "autoMapInputData"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        0
+      ],
+      "id": "a475c722-6474-4ba4-9ba5-05977c6854b7",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "NgvzK4J58y6XSfpX",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22d0fc0a-43f4-41b6-b5e3-1c5736e6e42d",
+              "name": "name",
+              "value": "={{$json.output.name}}",
+              "type": "string"
+            },
+            {
+              "id": "568ef2d2-ddcc-47f3-b3ec-f2cc738c41c7",
+              "name": "email",
+              "value": "={{$json.output.email}}",
+              "type": "string"
+            },
+            {
+              "id": "ea3bf18a-8ce4-4538-8605-1d1036e0d05a",
+              "name": "phone",
+              "value": "={{$json.output.phone}}",
+              "type": "string"
+            },
+            {
+              "id": "5b817723-6866-468e-8e09-594dce26b509",
+              "name": "linkedin",
+              "value": "={{$json.output.linkedin}}",
+              "type": "string"
+            },
+            {
+              "id": "391f47fc-15d3-45df-a632-f31da7e6dc55",
+              "name": "location",
+              "value": "={{$json.output.location}}",
+              "type": "string"
+            },
+            {
+              "id": "9205da1e-727e-4b67-8f85-603263000382",
+              "name": "current_title",
+              "value": "={{$json.output.current_title}}",
+              "type": "string"
+            },
+            {
+              "id": "d371d972-b06c-41f2-888e-e063a146058d",
+              "name": "summary",
+              "value": "={{$json.output.summary}}",
+              "type": "string"
+            },
+            {
+              "id": "9b4900a8-b904-44c4-9950-544179bc0a2c",
+              "name": "years_experience",
+              "value": "={{$json.output.years_experience}}",
+              "type": "number"
+            },
+            {
+              "id": "42a196cc-f2a5-4ce8-a65c-0348fd626c4f",
+              "name": "skills",
+              "value": "={{$json.output.skills}}",
+              "type": "array"
+            },
+            {
+              "id": "18abcc31-f8bb-4bd5-b4bb-c6c79bdfddc4",
+              "name": "soft_skills",
+              "value": "={{$json.output.soft_skills}}",
+              "type": "array"
+            },
+            {
+              "id": "ef172143-6c22-4bc3-a6f1-a00cf7a3d6bf",
+              "name": "languages",
+              "value": "={{$json.output.languages}}",
+              "type": "array"
+            },
+            {
+              "id": "07190241-5664-41ae-9045-fec6efe71b71",
+              "name": "=certifications",
+              "value": "={{$json.output.certifications}}",
+              "type": "array"
+            },
+            {
+              "id": "d9b9f640-7092-4d25-86b7-cdbc70107f76",
+              "name": "education",
+              "value": "={{$json.output.education}}",
+              "type": "array"
+            },
+            {
+              "id": "fd34cf3b-21a1-4ac5-a51a-e683a290b97e",
+              "name": "experience",
+              "value": "={{$json.output.experience}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        992,
+        0
+      ],
+      "id": "16b54273-a7a7-4dde-b828-b56b26f4b022",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d9c091df-6055-4017-9df5-460d3929a72e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6c9b7eda691b8556edaa36886e0e8aa3fdb9e620b87306881c181a5521c1076f"
+  },
+  "nodeGroups": [],
+  "id": "TcahYCO2fTChRZtW",
+  "tags": []
+}
