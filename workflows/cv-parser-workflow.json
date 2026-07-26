@@ -1,5 +1,5 @@
 {
-  "name": "AI-Career-Platform",
+  "name": "AI Career Platform - CV Parser",
   "nodes": [
     {
       "parameters": {},
@@ -10,7 +10,7 @@
         0
       ],
       "id": "186da76d-ca17-4869-9b6f-6f670c06f8f3",
-      "name": "When clicking ‘Execute workflow’"
+      "name": "Trigger - Manual"
     },
     {
       "parameters": {
@@ -36,7 +36,7 @@
         0
       ],
       "id": "4c27254d-ca24-4cc9-9df9-5fb494eacb65",
-      "name": "On form submission",
+      "name": "Form - CV Upload",
       "webhookId": "c3f0ef69-0b99-4f4a-adc4-9da7b670bbb1"
     },
     {
@@ -52,7 +52,23 @@
         0
       ],
       "id": "fff5af02-d24c-46c1-b4a2-a4963d1293f0",
-      "name": "Extract from File"
+      "name": "Extract - PDF"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert HR recruiter.\n\nAnalyze the following CV and identify:\n\n- Candidate full name\n- Email\n- Phone number\n- LinkedIn profile\n- Current job title\n- Years of experience\n- Skills\n- Languages\n- Education\n- Certifications\n- Work experience\n- Key strengths\n\nIf any information is missing, return \"Not provided\".\n\nCV:\n\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "cafa1c97-d9bc-4984-b0e9-f0b4c141cb5d",
+      "name": "AI - Parse Candidate"
     },
     {
       "parameters": {
@@ -71,29 +87,13 @@
         224
       ],
       "id": "9b62620a-850d-4d83-812b-50f4b6c5af82",
-      "name": "Anthropic Chat Model",
+      "name": "Claude Model",
       "credentials": {
         "anthropicApi": {
           "id": "UKw98FyFfaGrD8Ut",
           "name": "Anthropic account"
         }
       }
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=You are an expert HR recruiter.\n\nAnalyze the following CV and identify:\n\n- Candidate full name\n- Email\n- Phone number\n- LinkedIn profile\n- Current job title\n- Years of experience\n- Skills\n- Languages\n- Education\n- Certifications\n- Work experience\n- Key strengths\n\nIf any information is missing, return \"Not provided\".\n\nCV:\n\n{{ $json.text }}",
-        "hasOutputParser": true,
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        624,
-        0
-      ],
-      "id": "cafa1c97-d9bc-4984-b0e9-f0b4c141cb5d",
-      "name": "AI Agent"
     },
     {
       "parameters": {
@@ -106,27 +106,7 @@
         208
       ],
       "id": "d6f670e4-b207-477d-a747-b4d37a48cd3d",
-      "name": "Structured Output Parser"
-    },
-    {
-      "parameters": {
-        "tableId": "candidates",
-        "dataToSend": "autoMapInputData"
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        1216,
-        0
-      ],
-      "id": "a475c722-6474-4ba4-9ba5-05977c6854b7",
-      "name": "Create a row",
-      "credentials": {
-        "supabaseApi": {
-          "id": "NgvzK4J58y6XSfpX",
-          "name": "Supabase account"
-        }
-      }
+      "name": "Candidate Output Schema"
     },
     {
       "parameters": {
@@ -227,76 +207,96 @@
         0
       ],
       "id": "16b54273-a7a7-4dde-b828-b56b26f4b022",
-      "name": "Edit Fields"
+      "name": "Transform - Candidate Data"
+    },
+    {
+      "parameters": {
+        "tableId": "candidates",
+        "dataToSend": "autoMapInputData"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        0
+      ],
+      "id": "a475c722-6474-4ba4-9ba5-05977c6854b7",
+      "name": "DB - Save Candidate",
+      "credentials": {
+        "supabaseApi": {
+          "id": "NgvzK4J58y6XSfpX",
+          "name": "Supabase account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "When clicking ‘Execute workflow’": {
+    "Trigger - Manual": {
       "main": [
         []
       ]
     },
-    "On form submission": {
+    "Form - CV Upload": {
       "main": [
         [
           {
-            "node": "Extract from File",
+            "node": "Extract - PDF",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Anthropic Chat Model": {
+    "Extract - PDF": {
+      "main": [
+        [
+          {
+            "node": "AI - Parse Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Parse Candidate": {
+      "main": [
+        [
+          {
+            "node": "Transform - Candidate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Model": {
       "ai_languageModel": [
         [
           {
-            "node": "AI Agent",
+            "node": "AI - Parse Candidate",
             "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Extract from File": {
-      "main": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Structured Output Parser": {
+    "Candidate Output Schema": {
       "ai_outputParser": [
         [
           {
-            "node": "AI Agent",
+            "node": "AI - Parse Candidate",
             "type": "ai_outputParser",
             "index": 0
           }
         ]
       ]
     },
-    "AI Agent": {
+    "Transform - Candidate Data": {
       "main": [
         [
           {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "Create a row",
+            "node": "DB - Save Candidate",
             "type": "main",
             "index": 0
           }
@@ -310,7 +310,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "d9c091df-6055-4017-9df5-460d3929a72e",
+  "versionId": "40627807-0fde-4067-b8fe-60a00116b9db",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6c9b7eda691b8556edaa36886e0e8aa3fdb9e620b87306881c181a5521c1076f"
